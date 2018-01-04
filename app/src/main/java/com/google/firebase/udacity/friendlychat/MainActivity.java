@@ -15,6 +15,7 @@
  */
 package com.google.firebase.udacity.friendlychat;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
@@ -182,7 +183,17 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        return super.onOptionsItemSelected(item);
+
+        switch (item.getItemId()){
+            case R.id.sign_out_menu:
+                //sign out
+                AuthUI.getInstance().signOut(this);
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+
+        }
+
     }
 
     @Override
@@ -202,6 +213,22 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
 
         mFirebaseAuth.addAuthStateListener(mAuthStateListener);
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data){
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if(requestCode == RC_SIGN_IN){
+            if(resultCode== RESULT_OK){
+                Toast.makeText(MainActivity.this, "Signed in!", Toast.LENGTH_LONG).show();
+            }
+            //the result that onactivityresult returns when pressing the back button in the login screen
+            else if(resultCode== RESULT_CANCELED){
+                Toast.makeText(MainActivity.this, "exits", Toast.LENGTH_LONG).show();
+                finish();
+            }
+        }
     }
 
     private void onSignedInInitialize(String username){
