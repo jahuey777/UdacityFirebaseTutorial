@@ -30,6 +30,12 @@ import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 
+import com.google.firebase.database.ChildEventListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -49,12 +55,19 @@ public class MainActivity extends AppCompatActivity {
 
     private String mUsername;
 
+    private FirebaseDatabase mFirebaseDatabase;
+    private DatabaseReference mMessagesDatabaseReference;
+
+    private ChildEventListener mChildEventListener;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
         mUsername = ANONYMOUS;
+
+        mFirebaseDatabase = FirebaseDatabase.getInstance();//access point for our database
+        mMessagesDatabaseReference = mFirebaseDatabase.getReference().child("messages");//we want the messages portion of the database
 
         // Initialize references to views
         mProgressBar = (ProgressBar) findViewById(R.id.progressBar);
@@ -106,10 +119,46 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View view) {
                 // TODO: Send messages on click
 
+                //Creating a FriendlyMessage
+                FriendlyMessage friendlyMessage = new FriendlyMessage(mMessageEditText.getText().toString(), mUsername, null);
+                mMessagesDatabaseReference.push().setValue(friendlyMessage);
+
                 // Clear input box
                 mMessageEditText.setText("");
             }
         });
+
+        mChildEventListener = new ChildEventListener() {
+
+            //Called when a new message is added to the list
+            @Override
+            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+                //will deserialize the message
+               FriendlyMessage friendlyMessage = dataSnapshot.getValue(FriendlyMessage.class);
+               mMessageAdapter.add(friendlyMessage);
+            }
+
+            //called when contents of an existing message gets changed
+            @Override
+            public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+            }
+
+            @Override
+            public void onChildRemoved(DataSnapshot dataSnapshot) {
+            }
+
+            //if one of the messages changes position
+            @Override
+            public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+            }
+
+            //
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+            }
+        };
+
+        mMessagesDatabaseReference.addChildEventListener(mChildEventListener);
     }
 
     @Override
